@@ -4,21 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { StatementSheet } from "./statement-sheet";
 import { StatementActions } from "./print-button";
 import { LOCAL_DATA_KEY, deriveMonth, parseBackup } from "@/lib/local-planner";
+import { createDemoStore } from "@/lib/demo-store";
 import { currentMonthKey } from "@/lib/months";
 import { normalizeCurrency, DEFAULT_CURRENCY, CURRENCY_COOKIE } from "@/lib/currencies";
 import type { LocalPlannerStore } from "@/lib/local-planner";
 
-const BLANK: LocalPlannerStore = {
-  version: 1,
-  categories: [],
-  transactions: [],
-  goals: [],
-  paydayDay: 1,
-  updatedAt: new Date().toISOString(),
-};
-
 export function StaticStatement() {
-  const [store, setStore] = useState<LocalPlannerStore>(BLANK);
+  // Match the planner: show the seeded demo when there is no saved device data.
+  const [store, setStore] = useState<LocalPlannerStore>(createDemoStore);
   const [month, setMonth] = useState(currentMonthKey());
   const [code, setCode] = useState(DEFAULT_CURRENCY);
   const [today, setToday] = useState("");
