@@ -7,7 +7,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Ledgerline — Offline Budget Planner",
     short_name: "Ledgerline",
     description: "A private monthly budget planner that works without internet.",
-    start_url: "./",
+    // Open straight into the planner, not the marketing landing page.
+    // Relative so it works at a domain root (Vercel) and a sub-folder (GH Pages).
+    id: "./planner",
+    start_url: "./planner",
     scope: "./",
     display: "standalone",
     orientation: "any",

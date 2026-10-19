@@ -85,11 +85,12 @@ self.addEventListener("fetch", (event) => {
           return r;
         })
         .catch(async () => {
-          // Detect base path from SW location
-          const base = self.location.pathname.replace("sw.js", "");
+          // Offline fallback: land on the planner, never the landing page.
+          const base = self.location.pathname.replace(/sw\.js$/, "");
           const cached =
             (await caches.match(request)) ||
             (await caches.match(base + "planner")) ||
+            (await caches.match(base + "planner.html")) ||
             (await caches.match(base));
           return cached ?? Response.error();
         })
