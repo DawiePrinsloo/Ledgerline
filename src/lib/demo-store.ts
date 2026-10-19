@@ -146,6 +146,9 @@ export function createDemoStore(): LocalPlannerStore {
     transactions,
     goals: GOALS,
     paydayDay: 1,
+    recurring: [],
+    netWorthItems: [],
+    bucketMap: {},
     updatedAt: new Date().toISOString(),
   };
 }

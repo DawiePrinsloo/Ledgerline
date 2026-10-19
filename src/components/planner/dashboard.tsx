@@ -13,6 +13,10 @@ import { GoalsRow } from "./goals-row";
 import { ManageGoalModal } from "./manage-goal-modal";
 import { ManageCategoryModal, type NewCategoryPayload } from "./manage-category-modal";
 import { TrendCard } from "./trend-card";
+import { RecurringCard } from "./recurring-card";
+import { BudgetRuleCard } from "./budget-rule-card";
+import { NetWorthCard } from "./net-worth-card";
+import { AnnualSummaryCard } from "./annual-summary-card";
 import { AddIncomeModal } from "./add-income-modal";
 import { AddSpendingModal } from "./add-spending-modal";
 import { ToastStack, type ToastItem } from "./toasts";
@@ -28,6 +32,7 @@ import { buildXlsx, type Row, type Sheet } from "@/lib/xlsx";
 import { CURRENCY_COOKIE } from "@/lib/currencies";
 import { CurrencyContext } from "@/lib/currency-context";
 import {
+  applyRecurring,
   LOCAL_DATA_KEY,
   backupFilename,
   deriveMonth,
@@ -39,7 +44,7 @@ import {
   parseBackup,
   type LocalPlannerStore,
 } from "@/lib/local-planner";
-import type { GoalDTO, NewTxPayload, TxDTO } from "@/lib/types";
+import type { BudgetBucket, GoalDTO, NetWorthItemDTO, NewTxPayload, RecurringDTO, TxDTO } from "@/lib/types";
 
 interface PlannerDashboardProps {
   starter: LocalPlannerStore;
@@ -384,6 +389,56 @@ export function PlannerDashboard({
     pushToast("Category deleted.");
   },[pushToast]);
 
+  // ── Recurring transactions ──────────────────────────────────────────
+  const addRecurring = useCallback((r: Omit<RecurringDTO,"id">) => {
+    const id = Math.max(Date.now(), ...store.recurring.map(x=>x.id+1),1);
+    setStore(c=>stamp({...c,recurring:[...c.recurring,{...r,id}]}));
+    pushToast(`"${r.name}" will auto-fill each month.`);
+  },[store.recurring,pushToast]);
+
+  const toggleRecurring = useCallback((id: number) => {
+    setStore(c=>stamp({...c,recurring:c.recurring.map(r=>r.id===id?{...r,active:!r.active}:r)}));
+  },[]);
+
+  const deleteRecurring = useCallback((id: number) => {
+    setStore(c=>stamp({...c,recurring:c.recurring.filter(r=>r.id!==id)}));
+    pushToast("Recurring entry deleted.");
+  },[pushToast]);
+
+  // ── Net worth ──────────────────────────────────────────────────────
+  const addNetWorthItem = useCallback((item: Omit<NetWorthItemDTO,"id">) => {
+    const id = Math.max(Date.now(), ...store.netWorthItems.map(x=>x.id+1),1);
+    setStore(c=>stamp({...c,netWorthItems:[...c.netWorthItems,{...item,id}]}));
+    pushToast(`${item.type === "asset" ? "Asset" : "Liability"} "${item.name}" added.`);
+  },[store.netWorthItems,pushToast]);
+
+  const updateNetWorthItem = useCallback((id: number, amountCents: number) => {
+    setStore(c=>stamp({...c,netWorthItems:c.netWorthItems.map(i=>i.id===id?{...i,amountCents}:i)}));
+    pushToast("Amount updated.");
+  },[pushToast]);
+
+  const deleteNetWorthItem = useCallback((id: number) => {
+    setStore(c=>stamp({...c,netWorthItems:c.netWorthItems.filter(i=>i.id!==id)}));
+    pushToast("Item removed.");
+  },[pushToast]);
+
+  // ── 50/30/20 bucket map ──────────────────────────────────────────
+  const changeBucket = useCallback((categoryId: number, bucket: BudgetBucket) => {
+    setStore(c=>stamp({...c,bucketMap:{...c.bucketMap,[categoryId]:bucket}}));
+  },[]);
+
+  // ── Apply recurring on month switch ──────────────────────────────
+  useEffect(() => {
+    if (!storageReady) return;
+    const updated = applyRecurring(store, month);
+    if (updated !== store) {
+      setStore(updated);
+      pushToast("Recurring entries auto-filled for this month.");
+    }
+  // Only run when month changes, not on every store mutation
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, storageReady]);
+
   const setPayday = useCallback(
     (day: number) => {
       const safe = normalizePaydayDay(day);
@@ -408,6 +463,9 @@ export function PlannerDashboard({
       transactions: [],
       goals: store.goals.map((g) => ({ ...g, savedCents: 0 })),
       paydayDay: normalizePaydayDay(store.paydayDay),
+      recurring: [],
+      netWorthItems: [],
+      bucketMap: {},
       updatedAt: new Date().toISOString(),
     });
     setFilterCatId(null);
@@ -711,6 +769,35 @@ export function PlannerDashboard({
                 onDelete={deleteGoal}
               />
               <TrendCard store={store} currentMonth={currentMonth} />
+
+              {/* ── Recurring transactions ── */}
+              <RecurringCard
+                recurring={store.recurring}
+                categories={data.categories}
+                onAdd={addRecurring}
+                onToggle={toggleRecurring}
+                onDelete={deleteRecurring}
+              />
+
+              {/* ── 50/30/20 budget rule ── */}
+              <BudgetRuleCard
+                categories={data.categories}
+                incomeCents={data.incomeCents}
+                expenseCents={data.expenseCents}
+                bucketMap={store.bucketMap}
+                onChangeBucket={changeBucket}
+              />
+
+              {/* ── Net worth tracker ── */}
+              <NetWorthCard
+                items={store.netWorthItems}
+                onAdd={addNetWorthItem}
+                onUpdate={updateNetWorthItem}
+                onDelete={deleteNetWorthItem}
+              />
+
+              {/* ── Annual summary ── */}
+              <AnnualSummaryCard store={store} currentMonth={currentMonth} />
             </motion.div>
           </AnimatePresence>
         </main>

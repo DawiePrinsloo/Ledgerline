@@ -43,3 +43,27 @@ export interface PlannerData {
   incomeCents: number;
   expenseCents: number;
 }
+
+/** A transaction that repeats every month on a fixed day. */
+export interface RecurringDTO {
+  id: number;
+  name: string;
+  amountCents: number;
+  kind: Kind;
+  categoryId: number;
+  dayOfMonth: number;
+  /** If false the recurring is paused, not deleted. */
+  active: boolean;
+}
+
+/** A single asset or liability for net worth tracking. */
+export interface NetWorthItemDTO {
+  id: number;
+  name: string;
+  amountCents: number;
+  /** "asset" = savings, property, investments; "liability" = debts, loans */
+  type: "asset" | "liability";
+}
+
+/** Which 50/30/20 bucket a category belongs to: needs, wants, or savings. */
+export type BudgetBucket = "needs" | "wants" | "savings";

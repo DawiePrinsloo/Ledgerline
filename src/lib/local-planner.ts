@@ -1,5 +1,5 @@
-import type { CategoryDTO, GoalDTO, PlannerData, TxDTO } from "./types";
-import { currentMonthKey } from "./months";
+import type { BudgetBucket, CategoryDTO, GoalDTO, NetWorthItemDTO, PlannerData, RecurringDTO, TxDTO } from "./types";
+import { currentMonthKey, daysInMonth } from "./months";
 
 export const LOCAL_DATA_KEY = "ledgerline-local-planner-v1";
 export const LOCAL_DATA_VERSION = 1;
@@ -11,6 +11,12 @@ export interface LocalPlannerStore {
   goals: GoalDTO[];
   /** Day of the month the buyer is normally paid — drives the pace allowance. */
   paydayDay: number;
+  /** Transactions that repeat every month — subscriptions, rent, salary. */
+  recurring: RecurringDTO[];
+  /** Assets and liabilities for net worth tracking. */
+  netWorthItems: NetWorthItemDTO[];
+  /** Maps category id → 50/30/20 bucket. Missing = "wants" by default. */
+  bucketMap: Record<number, BudgetBucket>;
   updatedAt: string;
 }
 
@@ -43,6 +49,9 @@ export function makeStarterStore(months: PlannerData[]): LocalPlannerStore {
     transactions: [...txById.values()],
     goals: first.goals.map((g) => ({ ...g })),
     paydayDay: normalizePaydayDay(inferredPayday),
+    recurring: [],
+    netWorthItems: [],
+    bucketMap: {},
     updatedAt: new Date().toISOString(),
   };
 }
@@ -134,6 +143,9 @@ export function parseBackup(raw: string): LocalPlannerStore | null {
       transactions,
       goals,
       paydayDay: normalizePaydayDay(value.paydayDay),
+      recurring: [],
+      netWorthItems: [],
+      bucketMap: {},
       updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : new Date().toISOString(),
     };
   } catch {
@@ -143,6 +155,49 @@ export function parseBackup(raw: string): LocalPlannerStore | null {
 
 export function backupFilename(): string {
   return `ledgerline-backup-${currentMonthKey()}.json`;
+}
+
+/**
+ * Auto-fill recurring transactions for a given month if they haven't been
+ * added yet. Returns the store with new entries appended (or unchanged if
+ * all recurrings were already present).
+ */
+export function applyRecurring(store: LocalPlannerStore, month: string): LocalPlannerStore {
+  const active = store.recurring.filter((r) => r.active);
+  if (active.length === 0) return store;
+
+  const maxDay = daysInMonth(month);
+  const existingKeys = new Set(
+    store.transactions
+      .filter((tx) => tx.date.startsWith(`${month}-`))
+      .map((tx) => `${tx.categoryId}:${tx.amountCents}:${tx.note}`)
+  );
+
+  const newTx: TxDTO[] = [];
+  let nextId = Math.max(Date.now(), ...store.transactions.map((tx) => tx.id + 1), 1);
+
+  for (const r of active) {
+    const key = `${r.categoryId}:${r.amountCents}:${r.name}`;
+    if (existingKeys.has(key)) continue;
+
+    const day = Math.min(r.dayOfMonth, maxDay);
+    newTx.push({
+      id: nextId++,
+      date: `${month}-${String(day).padStart(2, "0")}`,
+      note: r.name,
+      amountCents: r.amountCents,
+      kind: r.kind,
+      categoryId: r.categoryId,
+    });
+  }
+
+  if (newTx.length === 0) return store;
+
+  return {
+    ...store,
+    transactions: [...store.transactions, ...newTx],
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 /**
