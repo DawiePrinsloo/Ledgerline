@@ -17,6 +17,8 @@ interface BudgetsCardProps {
   onSaveName: (categoryId: number, name: string) => void;
   onFilter: (categoryId: number) => void;
   onRevealInLedger: (categoryId: number) => void;
+  onDeleteCategory: (categoryId: number) => void;
+  onAddCategory: () => void;
   activeFilter: number | null;
   className?: string;
 }
@@ -38,6 +40,8 @@ export function BudgetsCard({
   onSaveName,
   onFilter,
   onRevealInLedger,
+  onDeleteCategory,
+  onAddCategory,
   activeFilter,
   className,
 }: BudgetsCardProps) {
@@ -313,6 +317,13 @@ export function BudgetsCard({
           );
         })}
       </div>
+
+      <button
+        onClick={onAddCategory}
+        className="mt-3 flex w-full items-center justify-center gap-2 border border-dashed border-linebright py-2.5 text-[11.5px] text-mist transition-colors hover:border-lime hover:text-lime"
+      >
+        + Add a new category
+      </button>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-2 border-t border-line/60 pt-3 text-[10.5px] text-mist">
         <span className="font-medium text-fog">What the labels mean:</span>

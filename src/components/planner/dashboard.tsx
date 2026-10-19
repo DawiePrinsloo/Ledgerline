@@ -10,6 +10,9 @@ import { DailyChartCard } from "./daily-chart-card";
 import { BudgetsCard } from "./budgets-card";
 import { LedgerCard } from "./ledger-card";
 import { GoalsRow } from "./goals-row";
+import { ManageGoalModal } from "./manage-goal-modal";
+import { ManageCategoryModal, type NewCategoryPayload } from "./manage-category-modal";
+import { TrendCard } from "./trend-card";
 import { AddIncomeModal } from "./add-income-modal";
 import { AddSpendingModal } from "./add-spending-modal";
 import { ToastStack, type ToastItem } from "./toasts";
@@ -36,7 +39,7 @@ import {
   parseBackup,
   type LocalPlannerStore,
 } from "@/lib/local-planner";
-import type { NewTxPayload, TxDTO } from "@/lib/types";
+import type { GoalDTO, NewTxPayload, TxDTO } from "@/lib/types";
 
 interface PlannerDashboardProps {
   starter: LocalPlannerStore;
@@ -80,6 +83,9 @@ export function PlannerDashboard({
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [currencyCode, setCurrencyCode] = useState(initialCurrency);
   const [filterCatId, setFilterCatId] = useState<number | null>(null);
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<GoalDTO | null>(null);
+  const [catModalOpen, setCatModalOpen] = useState(false);
   const ledgerRef = useRef<HTMLDivElement>(null);
 
   /** Badge actions filter the ledger and bring it into view. */
@@ -347,6 +353,36 @@ export function PlannerDashboard({
     },
     [store.goals, pushToast, currencyCode]
   );
+
+  const createGoal = useCallback((payload: Omit<GoalDTO,"id"|"savedCents">) => {
+    const id = Math.max(Date.now(), ...store.goals.map((g:GoalDTO)=>g.id+1),1);
+    const newGoal: GoalDTO = {...payload,id,savedCents:0};
+    setStore(c=>stamp({...c,goals:[...c.goals,newGoal]}));
+    pushToast(`Savings goal "${payload.name}" created.`);
+  },[store.goals,pushToast]);
+
+  const updateGoal = useCallback((goalId: number, payload: Omit<GoalDTO,"id"|"savedCents">) => {
+    setStore(c=>stamp({...c,goals:c.goals.map(g=>g.id===goalId?{...g,...payload}:g)}));
+    pushToast("Goal updated.");
+  },[pushToast]);
+
+  const deleteGoal = useCallback((goalId:number) => {
+    setStore(c=>stamp({...c,goals:c.goals.filter(g=>g.id!==goalId)}));
+    pushToast("Savings goal deleted.");
+  },[pushToast]);
+
+  const createCategory = useCallback((payload: NewCategoryPayload) => {
+    const id = Math.max(Date.now(), ...store.categories.map(c=>c.id+1),1);
+    const sort = Math.max(...store.categories.map(c=>c.sort),0)+1;
+    setStore(c=>stamp({...c,categories:[...c.categories,{...payload,id,sort,spentCents:0,txCount:0}]}));
+    pushToast(`Category "${payload.name}" added.`);
+  },[store.categories,pushToast]);
+
+  const deleteCategory = useCallback((catId:number) => {
+    if (!window.confirm("Delete this category? Entries logged to it will become uncategorised.")) return;
+    setStore(c=>stamp({...c,categories:c.categories.filter(cat=>cat.id!==catId)}));
+    pushToast("Category deleted.");
+  },[pushToast]);
 
   const setPayday = useCallback(
     (day: number) => {
@@ -647,6 +683,8 @@ export function PlannerDashboard({
                 onSaveName={renameCategory}
                 onFilter={toggleFilter}
                 onRevealInLedger={revealInLedger}
+                onDeleteCategory={deleteCategory}
+                onAddCategory={() => setCatModalOpen(true)}
                 activeFilter={filterCatId}
               />
 
@@ -665,7 +703,14 @@ export function PlannerDashboard({
               />
 
               {/* 5 — things you are saving for */}
-              <GoalsRow goals={data.goals} onFund={fundGoal} />
+              <GoalsRow
+                goals={data.goals}
+                onFund={fundGoal}
+                onAdd={() => { setEditingGoal(null); setGoalModalOpen(true); }}
+                onEdit={(g) => { setEditingGoal(g); setGoalModalOpen(true); }}
+                onDelete={deleteGoal}
+              />
+              <TrendCard store={store} currentMonth={currentMonth} />
             </motion.div>
           </AnimatePresence>
         </main>
@@ -695,6 +740,18 @@ export function PlannerDashboard({
           today={today}
         />
         <AddSpendingFab onOpen={() => setSpendingOpen(true)} />
+        <ManageGoalModal
+          open={goalModalOpen}
+          editing={editingGoal}
+          onClose={() => setGoalModalOpen(false)}
+          onSave={(payload) => editingGoal ? updateGoal(editingGoal.id, payload) : createGoal(payload)}
+          onDelete={deleteGoal}
+        />
+        <ManageCategoryModal
+          open={catModalOpen}
+          onClose={() => setCatModalOpen(false)}
+          onSave={createCategory}
+        />
         <ToastStack
           toasts={toasts}
           onDismiss={(id) =>

@@ -19,10 +19,13 @@ type AdjustmentMode = "add" | "remove";
 interface GoalsRowProps {
   goals: GoalDTO[];
   onFund: (goalId: number, addCents: number) => void;
+  onAdd: () => void;
+  onEdit: (goal: GoalDTO) => void;
+  onDelete: (goalId: number) => void;
   className?: string;
 }
 
-export function GoalsRow({ goals, onFund, className }: GoalsRowProps) {
+export function GoalsRow({ goals, onFund, onAdd, onEdit, onDelete, className }: GoalsRowProps) {
   const { code } = useCurrency();
   const quickAmounts = [2500, 10000];
   const [customId, setCustomId] = useState<number | null>(null);
@@ -52,11 +55,18 @@ export function GoalsRow({ goals, onFund, className }: GoalsRowProps) {
 
   return (
     <div className={className}>
-      <SectionTitle
-        className="mb-3"
-        title="Things you are saving for"
-        help="Put money aside towards a goal. The ring fills up as you get closer to the target. Use Add to put money in, or Take out to correct a mistake. Every change can also be undone from the message that appears afterwards."
-      />
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <SectionTitle
+          title="Things you are saving for"
+          help="Put money aside towards a goal. The ring fills up as you get closer to the target."
+        />
+        <button
+          onClick={onAdd}
+          className="shrink-0 rounded-full bg-lime px-3 py-2 text-[11px] font-semibold text-limedark transition-transform hover:-translate-y-0.5"
+        >
+          + New goal
+        </button>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {goals.map((g) => {
@@ -124,7 +134,15 @@ export function GoalsRow({ goals, onFund, className }: GoalsRowProps) {
                 </div>
               </div>
 
-              <div className="mt-5">
+              <div className="mb-2 flex justify-end">
+                <button
+                  onClick={() => onEdit(g)}
+                  className="text-[10px] text-mist/60 underline decoration-dotted underline-offset-2 hover:text-lime"
+                >
+                  Edit
+                </button>
+              </div>
+            <div className="mt-0">
                 {editing ? (
                   <div className="border border-linebright bg-raise/40 p-3">
                     <div className="flex items-center justify-between gap-3">
