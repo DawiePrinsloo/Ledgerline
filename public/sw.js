@@ -7,14 +7,16 @@
  */
 const CACHE_VERSION = "ledgerline-v1";
 
+// Pre-cache URLs relative to the service worker's location.
+// This allows the PWA to work whether hosted at / or a subfolder like /Ledgerline/
 const PRECACHE = [
-  "/",
-  "/planner",
-  "/statement",
-  "/manifest.webmanifest",
-  "/icons/ledgerline.svg",
-  "/icons/ledgerline-192.png",
-  "/icons/ledgerline-512.png",
+  "./",
+  "./planner",
+  "./statement",
+  "./manifest.webmanifest",
+  "./icons/ledgerline.svg",
+  "./icons/ledgerline-192.png",
+  "./icons/ledgerline-512.png",
 ];
 
 // ── Install: pre-cache the app shell ──────────────────────────────────────
@@ -83,10 +85,12 @@ self.addEventListener("fetch", (event) => {
           return r;
         })
         .catch(async () => {
+          // Detect base path from SW location
+          const base = self.location.pathname.replace("sw.js", "");
           const cached =
             (await caches.match(request)) ||
-            (await caches.match("/planner")) ||
-            (await caches.match("/"));
+            (await caches.match(base + "planner")) ||
+            (await caches.match(base));
           return cached ?? Response.error();
         })
     );
