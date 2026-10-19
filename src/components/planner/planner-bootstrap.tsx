@@ -22,6 +22,18 @@ function readCurrencyFromCookie(): string {
   return normalizeCurrency(row?.split("=")[1]);
 }
 
+/**
+ * The very first static-only build shipped a blank device store. Detect that
+ * exact shape and upgrade it to the seeded demo automatically.
+ */
+function isLegacyBlankStore(store: LocalPlannerStore): boolean {
+  return (
+    store.transactions.length === 0 &&
+    store.goals.length === 2 &&
+    store.goals.some((g) => g.name === "Savings goal")
+  );
+}
+
 export function PlannerBootstrap() {
   const [ready, setReady] = useState(false);
   // First launch uses the seeded demo; after that the buyer's local copy wins.
@@ -33,7 +45,15 @@ export function PlannerBootstrap() {
     const raw = localStorage.getItem(LOCAL_DATA_KEY);
     if (raw) {
       const saved = parseBackup(raw);
-      if (saved) setStore(saved);
+      if (saved) {
+        const next = isLegacyBlankStore(saved) ? createDemoStore() : saved;
+        setStore(next);
+        // Persist the upgraded demo immediately so the buyer only sees the
+        // empty build once, ever.
+        if (isLegacyBlankStore(saved)) {
+          localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(next));
+        }
+      }
     }
     setCurrency(readCurrencyFromCookie());
     setReady(true);

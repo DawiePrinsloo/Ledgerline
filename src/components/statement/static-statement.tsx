@@ -9,6 +9,15 @@ import { currentMonthKey } from "@/lib/months";
 import { normalizeCurrency, DEFAULT_CURRENCY, CURRENCY_COOKIE } from "@/lib/currencies";
 import type { LocalPlannerStore } from "@/lib/local-planner";
 
+/** Upgrade the very first blank-only static store to the seeded demo. */
+function isLegacyBlankStore(store: LocalPlannerStore): boolean {
+  return (
+    store.transactions.length === 0 &&
+    store.goals.length === 2 &&
+    store.goals.some((g) => g.name === "Savings goal")
+  );
+}
+
 export function StaticStatement() {
   // Match the planner: show the seeded demo when there is no saved device data.
   const [store, setStore] = useState<LocalPlannerStore>(createDemoStore);
@@ -27,7 +36,13 @@ export function StaticStatement() {
     const raw = localStorage.getItem(LOCAL_DATA_KEY);
     if (raw) {
       const saved = parseBackup(raw);
-      if (saved) setStore(saved);
+      if (saved) {
+        const next = isLegacyBlankStore(saved) ? createDemoStore() : saved;
+        setStore(next);
+        if (isLegacyBlankStore(saved)) {
+          localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(next));
+        }
+      }
     }
 
     const cookieRow = document.cookie.split("; ").find((r) => r.startsWith(`${CURRENCY_COOKIE}=`));
