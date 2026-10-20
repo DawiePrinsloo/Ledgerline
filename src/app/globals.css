@@ -266,6 +266,10 @@ body {
   color: var(--bone);
   overflow-x: clip;
   transition: background-color 0.35s ease, color 0.35s ease;
+  /* Safe area insets for phones with notches / gesture bars */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 ::selection {

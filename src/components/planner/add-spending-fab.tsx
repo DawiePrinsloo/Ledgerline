@@ -17,7 +17,8 @@ export function AddSpendingFab({ onOpen }: AddSpendingFabProps) {
       onClick={onOpen}
       aria-label="Add spending"
       title="Add spending"
-      className="fixed bottom-5 right-5 z-[70] flex size-14 items-center justify-center rounded-full bg-bone text-ink shadow-xl shadow-black/50 transition-transform hover:scale-105 active:scale-95"
+      className="fixed z-[70] flex size-14 items-center justify-center rounded-full bg-bone text-ink shadow-xl shadow-black/50 transition-transform hover:scale-105 active:scale-95"
+      style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))", right: "calc(1.25rem + env(safe-area-inset-right, 0px))" }}
     >
       <Plus size={26} strokeWidth={2.75} />
     </button>

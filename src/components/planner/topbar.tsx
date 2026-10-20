@@ -44,7 +44,7 @@ export function PlannerTopbar({
   onToggleExpanded,
 }: PlannerTopbarProps) {
   return (
-    <header className="sticky top-0 z-50 bg-ink/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 bg-ink/95 backdrop-blur-md" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 md:px-8">
         {/* ——— row 1: Ledgerline (left) · add buttons (right) ——— */}
         <div className="flex h-16 items-center justify-between gap-2">
