@@ -79,6 +79,13 @@ export interface NetWorthItemDTO {
   type: "asset" | "liability";
 }
 
+/** A snapshot of net worth at a specific point in time. */
+export interface NetWorthSnapshotDTO {
+  date: string; // ISO date
+  assetsCents: number;
+  liabilitiesCents: number;
+}
+
 /** Which 50/30/20 bucket a category belongs to: needs, wants, or savings. */
 export type BudgetBucket = "needs" | "wants" | "savings";
 

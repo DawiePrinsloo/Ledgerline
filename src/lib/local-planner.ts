@@ -1,4 +1,4 @@
-import type { BudgetBucket, CategoryDTO, DebtDTO, GoalDTO, IrregularExpenseDTO, NetWorthItemDTO, PlannerData, RecurringDTO, TxDTO } from "./types";
+import type { BudgetBucket, CategoryDTO, DebtDTO, GoalDTO, IrregularExpenseDTO, NetWorthItemDTO, NetWorthSnapshotDTO, PlannerData, RecurringDTO, TxDTO } from "./types";
 import { currentMonthKey, daysInMonth } from "./months";
 
 export const LOCAL_DATA_KEY = "ledgerline-local-planner-v1";
@@ -15,6 +15,8 @@ export interface LocalPlannerStore {
   recurring: RecurringDTO[];
   /** Assets and liabilities for net worth tracking. */
   netWorthItems: NetWorthItemDTO[];
+  /** Historical net worth snapshots. */
+  netWorthHistory: import("./types").NetWorthSnapshotDTO[];
   /** Maps category id → 50/30/20 bucket. Missing = "wants" by default. */
   bucketMap: Record<number, BudgetBucket>;
   /** Debt payoff entries */
@@ -55,6 +57,7 @@ export function makeStarterStore(months: PlannerData[]): LocalPlannerStore {
     paydayDay: normalizePaydayDay(inferredPayday),
     recurring: [],
     netWorthItems: [],
+    netWorthHistory: [],
     bucketMap: {},
     debts: [],
     irregularExpenses: [],
@@ -170,6 +173,7 @@ export function parseBackup(raw: string): LocalPlannerStore | null {
       paydayDay: normalizePaydayDay(value.paydayDay),
       recurring,
       netWorthItems,
+      netWorthHistory: Array.isArray(value.netWorthHistory) ? value.netWorthHistory as NetWorthSnapshotDTO[] : [],
       bucketMap,
       debts: Array.isArray(value.debts) ? value.debts as DebtDTO[] : [],
       irregularExpenses: Array.isArray(value.irregularExpenses) ? value.irregularExpenses as IrregularExpenseDTO[] : [],

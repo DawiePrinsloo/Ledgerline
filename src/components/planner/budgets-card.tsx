@@ -93,6 +93,35 @@ export function BudgetsCard({
         }
       />
 
+      {/* Month-total planned-vs-actual summary */}
+      <div className="mb-6 grid gap-2 border border-line bg-coal p-4 sm:grid-cols-3 sm:text-center">
+        <div className="border border-linebright bg-panel px-3 py-2">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-mist">Total budget</div>
+          <div className="tabular mt-1 font-mono text-[16px] font-semibold text-bone">
+            {moneyWhole(categories.reduce((s, c) => s + c.budgetCents, 0), code)}
+          </div>
+        </div>
+        <div className="border border-linebright bg-panel px-3 py-2">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-mist">Total spent</div>
+          <div className="tabular mt-1 font-mono text-[16px] font-semibold text-bone">
+            {moneyWhole(categories.reduce((s, c) => s + c.spentCents, 0), code)}
+          </div>
+        </div>
+        {(() => {
+          const totalPlanned = categories.reduce((s, c) => s + c.budgetCents, 0);
+          const totalActual = categories.reduce((s, c) => s + c.spentCents, 0);
+          const variance = totalPlanned - totalActual;
+          return (
+            <div className={cn("border bg-panel px-3 py-2", variance >= 0 ? "border-lime/30" : "border-rose/30")}>
+              <div className="text-[10px] uppercase tracking-[0.14em] text-mist">Budget remaining</div>
+              <div className={cn("tabular mt-1 font-mono text-[16px] font-semibold", variance >= 0 ? "text-lime" : "text-rose")}>
+                {moneyWhole(Math.abs(variance), code)} {variance >= 0 ? "left" : "over"}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {envelopes.map((c) => {
           const used = pct(c.spentCents, c.budgetCents);

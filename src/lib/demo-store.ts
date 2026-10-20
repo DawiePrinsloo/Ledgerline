@@ -148,6 +148,7 @@ export function createDemoStore(): LocalPlannerStore {
     paydayDay: 1,
     recurring: [],
     netWorthItems: [],
+    netWorthHistory: [],
     bucketMap: {},
     debts: [],
     irregularExpenses: [],
