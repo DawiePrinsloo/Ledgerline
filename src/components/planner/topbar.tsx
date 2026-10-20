@@ -27,6 +27,9 @@ interface PlannerTopbarProps {
   onNext: () => void;
   onAddIncome: () => void;
   onAddSpending: () => void;
+  /** Whether the expandable row (month nav + settings) is visible. */
+  expanded: boolean;
+  onToggleExpanded: () => void;
 }
 
 export function PlannerTopbar({
@@ -37,8 +40,9 @@ export function PlannerTopbar({
   onNext,
   onAddIncome,
   onAddSpending,
+  expanded,
+  onToggleExpanded,
 }: PlannerTopbarProps) {
-  const [isOpen, setIsOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 bg-ink/95 backdrop-blur-md">
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 md:px-8">
@@ -79,17 +83,18 @@ export function PlannerTopbar({
               <span className="sm:hidden">Spend</span>
             </button>
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              aria-label={isOpen ? "Close menu" : "Open menu"}
+              onClick={onToggleExpanded}
+              aria-label={expanded ? "Collapse top bar" : "Expand top bar"}
+              title={expanded ? "Hide month, settings and status bar" : "Show month, settings and status bar"}
               className="hidden md:flex shrink-0 items-center justify-center border border-linebright p-2 text-fog transition-colors hover:border-lime hover:text-lime rounded-full ml-1"
             >
-              {isOpen ? <X size={16} /> : <Menu size={16} />}
+              {expanded ? <X size={16} /> : <Menu size={16} />}
             </button>
           </div>
         </div>
 
         {/* ——— row 2: month nav + settings, centered ——— */}
-        <div className={cn("flex flex-col items-center justify-center gap-y-3 border-t border-line/70 py-4 transition-all", !isOpen && "md:hidden")}>
+        <div className={cn("flex flex-col items-center justify-center gap-y-3 border-t border-line/70 py-4 transition-all", !expanded && "md:hidden")}>
           <div className="flex items-center border border-linebright">
             <MonthNav
               month={month}

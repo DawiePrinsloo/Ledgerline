@@ -93,6 +93,7 @@ export function PlannerDashboard({
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [currencyCode, setCurrencyCode] = useState(initialCurrency);
   const [filterCatId, setFilterCatId] = useState<number | null>(null);
+  const [topBarExpanded, setTopBarExpanded] = useState(false);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<GoalDTO | null>(null);
   const [catModalOpen, setCatModalOpen] = useState(false);
@@ -464,6 +465,12 @@ export function PlannerDashboard({
     setStore(c=>stamp({...c,irregularExpenses:c.irregularExpenses.filter(i=>i.id!==id)}));
   },[]);
 
+  const recordNetWorthSnapshot = useCallback((assets: number, liabilities: number) => {
+    const snap = { date: new Date().toISOString(), assetsCents: assets, liabilitiesCents: liabilities };
+    setStore(c => stamp({...c, netWorthHistory: [...c.netWorthHistory, snap]}));
+    pushToast("Net worth snapshot recorded.");
+  }, [pushToast]);
+
   const setPayday = useCallback(
     (day: number) => {
       const safe = normalizePaydayDay(day);
@@ -490,6 +497,7 @@ export function PlannerDashboard({
       paydayDay: normalizePaydayDay(store.paydayDay),
       recurring: [],
       netWorthItems: [],
+      netWorthHistory: [],
       bucketMap: {},
       debts: [],
       irregularExpenses: [],
@@ -715,13 +723,17 @@ export function PlannerDashboard({
           onNext={() => switchMonth(1)}
           onAddIncome={() => setIncomeOpen(true)}
           onAddSpending={() => setSpendingOpen(true)}
+          expanded={topBarExpanded}
+          onToggleExpanded={() => setTopBarExpanded(v => !v)}
         />
 
         <main className="mx-auto max-w-[1440px] space-y-3 px-3 pb-14 pt-4 sm:px-4 sm:pt-5 md:px-8 md:pb-16">
-          <div className="mb-4">
+          <div className={cn("mb-4", !topBarExpanded && "hidden md:hidden max-md:block")}>
             <OfflineControls saved={storageReady} onStartFresh={startFresh} />
           </div>
-          <HelpPanel />
+          <div className={cn(!topBarExpanded && "hidden md:hidden max-md:block")}>
+            <HelpPanel />
+          </div>
 
           <div>
             <SectionTitle
@@ -818,9 +830,11 @@ export function PlannerDashboard({
               {/* ── Net worth tracker ── */}
               <NetWorthCard
                 items={store.netWorthItems}
+                history={store.netWorthHistory}
                 onAdd={addNetWorthItem}
                 onUpdate={updateNetWorthItem}
                 onDelete={deleteNetWorthItem}
+                onRecordSnapshot={recordNetWorthSnapshot}
               />
 
               {/* ── Annual summary ── */}
@@ -831,7 +845,18 @@ export function PlannerDashboard({
                 store={store}
                 month={month}
                 today={today}
-                onMarkPaid={()=>{}}
+                onPayBill={(bill, date) => {
+                  const tx = {
+                    id: nextTransactionId(store),
+                    date,
+                    note: bill.name,
+                    amountCents: bill.amountCents,
+                    kind: bill.kind,
+                    categoryId: bill.categoryId,
+                  };
+                  insertTransaction(tx);
+                  pushToast(`Payment recorded for ${bill.name}.`);
+                }}
               />
 
               {/* Quarterly overview */}
