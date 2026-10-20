@@ -38,6 +38,7 @@ export function PlannerTopbar({
   onAddIncome,
   onAddSpending,
 }: PlannerTopbarProps) {
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 bg-ink/95 backdrop-blur-md">
       <div className="mx-auto max-w-[1440px] px-3 sm:px-4 md:px-8">
@@ -77,11 +78,18 @@ export function PlannerTopbar({
               <span className="hidden sm:inline">Add spending</span>
               <span className="sm:hidden">Spend</span>
             </button>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              className="hidden md:flex shrink-0 items-center justify-center border border-linebright p-2 text-fog transition-colors hover:border-lime hover:text-lime rounded-full ml-1"
+            >
+              {isOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
           </div>
         </div>
 
         {/* ——— row 2: month nav + settings, centered ——— */}
-        <div className="flex flex-col items-center justify-center gap-y-3 border-t border-line/70 py-4">
+        <div className={cn("flex flex-col items-center justify-center gap-y-3 border-t border-line/70 py-4 transition-all", !isOpen && "md:hidden")}>
           <div className="flex items-center border border-linebright">
             <MonthNav
               month={month}
