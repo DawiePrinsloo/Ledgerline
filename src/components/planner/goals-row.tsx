@@ -9,6 +9,8 @@ import { iconFor } from "@/lib/icons";
 import { moneyWhole, parseDollarsToCents, pct } from "@/lib/format";
 import { toneVar } from "@/lib/themes";
 import { useCurrency } from "@/lib/currency-context";
+import { todayISO } from "@/lib/months";
+import { monthlyContribution } from "@/lib/types";
 import type { GoalDTO } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -122,11 +124,24 @@ export function GoalsRow({ goals, onFund, onAdd, onEdit, onDelete, className }: 
                   </div>
                   <div className="mt-1 font-mono text-[8.5px] tracking-[0.3em] text-mist">
                     {g.targetLabel ?? "SAVINGS GOAL"}
+                    {g.targetDate && (
+                      <span className="ml-2 text-mist/70">
+                        by {new Date(g.targetDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                      </span>
+                    )}
                   </div>
                   <div className="tabular mt-2 font-mono text-[11px] text-fog">
                     <span className="text-bone">{moneyWhole(g.savedCents, code)}</span>
                     <span className="text-mist"> of {moneyWhole(g.targetCents, code)}</span>
                   </div>
+                  {(() => {
+                    const contrib = monthlyContribution(g, todayISO());
+                    return contrib !== null && contrib > 0 ? (
+                      <div className="mt-0.5 text-[9.5px] text-mist">
+                        Save <span className="text-lime font-medium">{moneyWhole(contrib, code)}/month</span> to reach it in time
+                      </div>
+                    ) : null;
+                  })()}
                   <div className="mt-1 text-[10.5px] text-mist">
                     <span className="font-medium text-fog">{p}% saved</span> towards{" "}
                     {g.name}

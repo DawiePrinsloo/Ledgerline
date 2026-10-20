@@ -1,4 +1,4 @@
-import type { BudgetBucket, CategoryDTO, GoalDTO, NetWorthItemDTO, PlannerData, RecurringDTO, TxDTO } from "./types";
+import type { BudgetBucket, CategoryDTO, DebtDTO, GoalDTO, IrregularExpenseDTO, NetWorthItemDTO, PlannerData, RecurringDTO, TxDTO } from "./types";
 import { currentMonthKey, daysInMonth } from "./months";
 
 export const LOCAL_DATA_KEY = "ledgerline-local-planner-v1";
@@ -17,6 +17,10 @@ export interface LocalPlannerStore {
   netWorthItems: NetWorthItemDTO[];
   /** Maps category id → 50/30/20 bucket. Missing = "wants" by default. */
   bucketMap: Record<number, BudgetBucket>;
+  /** Debt payoff entries */
+  debts: DebtDTO[];
+  /** Irregular annual expenses with monthly saving targets */
+  irregularExpenses: IrregularExpenseDTO[];
   updatedAt: string;
 }
 
@@ -52,6 +56,8 @@ export function makeStarterStore(months: PlannerData[]): LocalPlannerStore {
     recurring: [],
     netWorthItems: [],
     bucketMap: {},
+    debts: [],
+    irregularExpenses: [],
     updatedAt: new Date().toISOString(),
   };
 }
@@ -137,15 +143,36 @@ export function parseBackup(raw: string): LocalPlannerStore | null {
     ) {
       return null;
     }
+    // Restore new fields that were added after v1 — safe fallback to empty for
+    // old backups that pre-date these fields.
+    const recurring = Array.isArray(value.recurring)
+      ? (value.recurring as RecurringDTO[]).filter(
+          (r) => typeof r.id === "number" && typeof r.name === "string"
+        )
+      : [];
+    const netWorthItems = Array.isArray(value.netWorthItems)
+      ? (value.netWorthItems as NetWorthItemDTO[]).filter(
+          (i) => typeof i.id === "number" && typeof i.name === "string"
+        )
+      : [];
+    const bucketMap =
+      typeof value.bucketMap === "object" &&
+      value.bucketMap !== null &&
+      !Array.isArray(value.bucketMap)
+        ? (value.bucketMap as Record<number, BudgetBucket>)
+        : {};
+
     return {
       version: LOCAL_DATA_VERSION,
       categories,
       transactions,
       goals,
       paydayDay: normalizePaydayDay(value.paydayDay),
-      recurring: [],
-      netWorthItems: [],
-      bucketMap: {},
+      recurring,
+      netWorthItems,
+      bucketMap,
+      debts: Array.isArray(value.debts) ? value.debts as DebtDTO[] : [],
+      irregularExpenses: Array.isArray(value.irregularExpenses) ? value.irregularExpenses as IrregularExpenseDTO[] : [],
       updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : new Date().toISOString(),
     };
   } catch {

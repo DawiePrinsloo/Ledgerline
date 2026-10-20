@@ -33,6 +33,20 @@ export interface GoalDTO {
   targetCents: number;
   savedCents: number;
   targetLabel: string | null;
+  /** ISO date YYYY-MM-DD by which the goal should be reached (optional). */
+  targetDate?: string | null;
+}
+
+/** Calculate the monthly contribution needed to reach a goal by its target date. */
+export function monthlyContribution(goal: GoalDTO, todayISO: string): number | null {
+  if (!goal.targetDate) return null;
+  const remaining = goal.targetCents - goal.savedCents;
+  if (remaining <= 0) return 0;
+  const [ty, tm] = goal.targetDate.split("-").map(Number);
+  const [cy, cm] = todayISO.slice(0, 7).split("-").map(Number);
+  const months = (ty - cy) * 12 + (tm - cm);
+  if (months <= 0) return remaining; // overdue — need it all now
+  return Math.ceil(remaining / months);
 }
 
 export interface PlannerData {
@@ -67,3 +81,17 @@ export interface NetWorthItemDTO {
 
 /** Which 50/30/20 bucket a category belongs to: needs, wants, or savings. */
 export type BudgetBucket = "needs" | "wants" | "savings";
+
+export interface DebtDTO {
+  id: number;
+  name: string;
+  balanceCents: number;
+  interestRate: number;
+  minimumPaymentCents: number;
+}
+
+export interface IrregularExpenseDTO {
+  id: number;
+  name: string;
+  annualCents: number;
+}

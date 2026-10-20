@@ -149,6 +149,8 @@ export function createDemoStore(): LocalPlannerStore {
     recurring: [],
     netWorthItems: [],
     bucketMap: {},
+    debts: [],
+    irregularExpenses: [],
     updatedAt: new Date().toISOString(),
   };
 }

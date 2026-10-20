@@ -44,6 +44,7 @@ export function ManageGoalModal({
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [label, setLabel] = useState("");
+  const [targetDate, setTargetDate] = useState<string>("");
   const [icon, setIcon] = useState("plane");
   const [color, setColor] = useState(GOAL_COLORS[0]);
   const [error, setError] = useState("");
@@ -54,13 +55,15 @@ export function ManageGoalModal({
         setName(editing.name);
         setTarget((editing.targetCents / 100).toString());
         setLabel(editing.targetLabel ?? "");
+        setTargetDate(editing.targetDate ?? "");
         setIcon(editing.icon);
         setColor(editing.color);
       } else {
         setName("");
         setTarget("");
-        setLabel("");
-        setIcon("plane");
+      setLabel("");
+      setTargetDate("");
+      setIcon("plane");
         setColor(GOAL_COLORS[0]);
       }
       setError("");
@@ -76,6 +79,7 @@ export function ManageGoalModal({
       name: name.trim().slice(0, 40),
       targetCents,
       targetLabel: label.trim().slice(0, 30) || null,
+      targetDate: targetDate || null,
       icon,
       color,
     });
@@ -147,6 +151,19 @@ export function ManageGoalModal({
                 maxLength={30}
                 placeholder="e.g. Flights + 7 nights, 6-month buffer"
                 className="mt-1.5 w-full border-b border-linebright bg-transparent pb-1.5 text-[13px] text-bone outline-none transition-colors placeholder:text-mist/50 focus:border-lime"
+              />
+            </label>
+
+            <label className="mt-5 block">
+              <span className="flex items-baseline justify-between gap-2">
+                <span className="text-[11px] font-medium text-fog">Target date</span>
+                <span className="text-[10.5px] text-mist">Optional — when you need the money by</span>
+              </span>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                className="tabular mt-1.5 w-full border border-line bg-coal px-3 py-2.5 font-mono text-[13px] text-bone outline-none transition-colors focus:border-lime"
               />
             </label>
 

@@ -17,6 +17,11 @@ import { RecurringCard } from "./recurring-card";
 import { BudgetRuleCard } from "./budget-rule-card";
 import { NetWorthCard } from "./net-worth-card";
 import { AnnualSummaryCard } from "./annual-summary-card";
+import { BillCalendarCard } from "./bill-calendar-card";
+import { QuarterlyCard } from "./quarterly-card";
+import { DebtPayoffCard, type DebtDTO } from "./debt-payoff-card";
+import { NoSpendCard } from "./no-spend-card";
+import { IrregularExpenseCard, type IrregularExpenseDTO } from "./irregular-expense-card";
 import { AddIncomeModal } from "./add-income-modal";
 import { AddSpendingModal } from "./add-spending-modal";
 import { ToastStack, type ToastItem } from "./toasts";
@@ -439,6 +444,26 @@ export function PlannerDashboard({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, storageReady]);
 
+  const addDebt = useCallback((d: Omit<DebtDTO,"id">) => {
+    const id = Math.max(Date.now(), ...store.debts.map(x=>x.id+1),1);
+    setStore(c=>stamp({...c,debts:[...c.debts,{...d,id}]}));
+    pushToast(`Debt "${d.name}" added.`);
+  },[store.debts,pushToast]);
+
+  const deleteDebt = useCallback((id: number) => {
+    setStore(c=>stamp({...c,debts:c.debts.filter(d=>d.id!==id)}));
+  },[]);
+
+  const addIrregular = useCallback((item: Omit<IrregularExpenseDTO,"id">) => {
+    const id = Math.max(Date.now(), ...store.irregularExpenses.map(x=>x.id+1),1);
+    setStore(c=>stamp({...c,irregularExpenses:[...c.irregularExpenses,{...item,id}]}));
+    pushToast(`Irregular expense "${item.name}" added.`);
+  },[store.irregularExpenses,pushToast]);
+
+  const deleteIrregular = useCallback((id: number) => {
+    setStore(c=>stamp({...c,irregularExpenses:c.irregularExpenses.filter(i=>i.id!==id)}));
+  },[]);
+
   const setPayday = useCallback(
     (day: number) => {
       const safe = normalizePaydayDay(day);
@@ -466,6 +491,8 @@ export function PlannerDashboard({
       recurring: [],
       netWorthItems: [],
       bucketMap: {},
+      debts: [],
+      irregularExpenses: [],
       updatedAt: new Date().toISOString(),
     });
     setFilterCatId(null);
@@ -798,6 +825,38 @@ export function PlannerDashboard({
 
               {/* ── Annual summary ── */}
               <AnnualSummaryCard store={store} currentMonth={currentMonth} />
+
+              {/* Bill calendar */}
+              <BillCalendarCard
+                store={store}
+                month={month}
+                today={today}
+                onMarkPaid={()=>{}}
+              />
+
+              {/* Quarterly overview */}
+              <QuarterlyCard store={store} currentMonth={currentMonth} />
+
+              {/* Debt payoff calculator */}
+              <DebtPayoffCard
+                debts={store.debts}
+                onAdd={addDebt}
+                onDelete={deleteDebt}
+              />
+
+              {/* No-spend challenge */}
+              <NoSpendCard
+                transactions={data.transactions}
+                month={month}
+                today={today}
+              />
+
+              {/* Irregular expense planner */}
+              <IrregularExpenseCard
+                items={store.irregularExpenses}
+                onAdd={addIrregular}
+                onDelete={deleteIrregular}
+              />
             </motion.div>
           </AnimatePresence>
         </main>
