@@ -86,7 +86,7 @@ export function PlannerTopbar({
               onClick={onToggleExpanded}
               aria-label={expanded ? "Collapse top bar" : "Expand top bar"}
               title={expanded ? "Hide month, settings and status bar" : "Show month, settings and status bar"}
-              className="hidden md:flex shrink-0 items-center justify-center border border-linebright p-2 text-fog transition-colors hover:border-lime hover:text-lime rounded-full ml-1"
+              className="hidden landscape:flex md:flex shrink-0 items-center justify-center border border-linebright p-2 text-fog transition-colors hover:border-lime hover:text-lime rounded-full ml-1"
             >
               {expanded ? <X size={16} /> : <Menu size={16} />}
             </button>
@@ -94,7 +94,7 @@ export function PlannerTopbar({
         </div>
 
         {/* ——— row 2: month nav + settings, centered ——— */}
-        <div className={cn("flex flex-col items-center justify-center gap-y-3 border-t border-line/70 py-4 transition-all", !expanded && "md:hidden")}>
+        <div className={cn("flex flex-col items-center justify-center gap-y-3 border-t border-line/70 py-4 transition-all", !expanded && "landscape:hidden md:hidden")}>
           <div className="flex items-center border border-linebright">
             <MonthNav
               month={month}

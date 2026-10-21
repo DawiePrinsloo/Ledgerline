@@ -728,10 +728,10 @@ export function PlannerDashboard({
         />
 
         <main className="mx-auto max-w-[1440px] space-y-3 px-3 pb-14 pt-4 sm:px-4 sm:pt-5 md:px-8 md:pb-16">
-          <div className={cn("mb-4", !topBarExpanded && "hidden md:hidden max-md:block")}>
+          <div className={cn("mb-4", !topBarExpanded && "landscape:hidden md:hidden portrait:max-md:block")}>
             <OfflineControls saved={storageReady} onStartFresh={startFresh} />
           </div>
-          <div className={cn(!topBarExpanded && "hidden md:hidden max-md:block")}>
+          <div className={cn(!topBarExpanded && "landscape:hidden md:hidden portrait:max-md:block")}>
             <HelpPanel />
           </div>
 
